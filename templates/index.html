@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GKE Cluster Connection</title>
+</head>
+<body>
+    <h2>Connect to GKE Cluster</h2>
+    <form action="/" method="post" enctype="multipart/form-data">
+        <label for="kubeconfig">Upload kubeconfig:</label>
+        <input type="file" name="kubeconfig">
+        <button type="submit">Connect</button>
+    </form>
+
+    <h3>OR</h3>
+
+    <form action="/" method="post">
+        <label for="cluster_url">Cluster URL:</label>
+        <input type="text" name="cluster_url" required>
+        <br>
+        <label for="token">Token:</label>
+        <input type="text" name="token" required>
+        <br>
+        <button type="submit">Connect</button>
+    </form>
+
+    {% if namespaces %}
+        <h3>Available Namespaces:</h3>
+        <ul>
+            {% for ns in namespaces %}
+                <li>{{ ns }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html

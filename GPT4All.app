@@ -1,0 +1,1 @@
+/Users/vansh/code-repo/personal-projects/my-project/gke-connect/models/bin/gpt4all.app
