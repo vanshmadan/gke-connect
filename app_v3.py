@@ -8,11 +8,21 @@ from k8s_deploy_handler import deploy_to_namespace
 from kubernetes.client.exceptions import ApiException
 from config import Config
 from k8s_resource_api import resource_api
+from k8s_service_actions import service_actions
+from logs_api import logs_api 
+from  delete_namespace_route import delete_environment
+
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 app = Quart(__name__)
 app = cors(app)
 
 app.register_blueprint(resource_api)
+app.register_blueprint(service_actions)
+app.register_blueprint(delete_environment)
+
+app.register_blueprint(logs_api)
 
 # Database connections
 def get_cluster_db():
@@ -21,9 +31,7 @@ def get_cluster_db():
 def get_environment_db():
     return asyncpg.connect(**Config.ENVIRONMENT_DB_CONFIG)
 
-
 # --- API ROUTES ---
-
 @app.route("/api/connect-gke", methods=["POST"])
 async def connect_gke():
     form = await request.form
@@ -34,34 +42,18 @@ async def connect_gke():
     if not env_name:
         return jsonify({"error": "Environment name is required"}), 400
 
-    if not cluster_url:
-        print(f"⚠️ No cluster_url provided. Marking {env_name} as connected.")
-        try:
-            config.load_kube_config()
-            contexts, active_context = config.list_kube_config_contexts()
-            cluster_name = active_context["context"]["cluster"]
-        except Exception as e:
-            cluster_name = None
-            print(f"⚠️ Could not extract cluster name: {e}")
-
-        namespace_created = await create_namespace(env_name)
-        await save_cluster_state(env_name, "UNKNOWN", "token", namespace_created, cluster_name)
-
-        return jsonify({
-            "message": f"Cluster state saved, Namespace Created: {namespace_created}",
-            "cluster_name": cluster_name
-        }), 200
-
     try:
         if upload_type == "token":
+            if not cluster_url:
+                return jsonify({"error": "Cluster URL required for token auth"}), 400
             return await connect_via_token(env_name, cluster_url)
         elif upload_type == "kubeconfig":
             return await connect_via_kubeconfig(env_name)
         else:
             return jsonify({"error": "Invalid authentication method"}), 400
     except Exception as e:
+        print("❌ connect-gke error:", e)
         return jsonify({"error": str(e)}), 500
-
 
 async def connect_via_kubeconfig(env_name):
     files = await request.files
@@ -96,6 +88,9 @@ async def connect_via_token(env_name, cluster_url):
 
     if not token:
         return jsonify({"error": "Token is required"}), 400
+
+    if not cluster_url:
+        return jsonify({"error": "Cluster URL is required for token-based auth"}), 400
 
     kube_config = client.Configuration()
     kube_config.host = cluster_url
