@@ -1,1 +1,7 @@
+dotenv
+aiohttp
+kubernetes
+asyncpg
+quart_cors
+quart
 sentence-transformers

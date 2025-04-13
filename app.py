@@ -7,6 +7,10 @@ import os
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
 from dotenv import load_dotenv
+from github_oauth import github_bp
+
+app.secret_key = os.getenv("SECRET_KEY", "change-me")  # Needed for session
+app.register_blueprint(github_bp)
 
 # Load environment variables
 load_dotenv()

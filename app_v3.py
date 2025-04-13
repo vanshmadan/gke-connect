@@ -11,13 +11,16 @@ from k8s_resource_api import resource_api
 from k8s_service_actions import service_actions
 from logs_api import logs_api 
 from  delete_namespace_route import delete_environment
+from github_oauth import github_bp
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 app = Quart(__name__)
-app = cors(app)
+app = cors(app, allow_origin="http://localhost:3000", allow_credentials=True)
 
+app.secret_key = os.getenv("SECRET_KEY", "change-me")  # Needed for session
+app.register_blueprint(github_bp)
 app.register_blueprint(resource_api)
 app.register_blueprint(service_actions)
 app.register_blueprint(delete_environment)
